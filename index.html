@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <style>
+    body {
+        font-family: Monospace;
+        background-color: #000;
+        color: #fff;
+        margin: 0 0 0 0;
+        padding: 0 0 0 0;
+        border: none;
+        cursor: default;
+    }
+
+    #info {
+        color: #fff;
+        position: absolute;
+        top: 10px;
+        width: 100%;
+        text-align: center;
+        z-index: 100;
+        display: block;
+    }
+
+    #info a {
+        color: #f00;
+        font-weight: bold;
+        text-decoration: underline;
+        cursor: pointer
+    }
+
+    #glFullscreen {
+        width: 100%;
+        height: 100vh;
+        min-width: 640px;
+        min-height: 360px;
+        position: relative;
+        overflow: hidden;
+        z-index: 0;
+    }
+
+    #example {
+        width: 100%;
+        height: 100%;
+        top: 0;
+        left: 0;
+        background-color: #000000;
+    }
+
+
+    #dat {
+        user-select: none;
+        position: absolute;
+        left: 0;
+        top: 0;
+        z-Index: 200;
+    }
+    </style>
+</head>
+
+<body>
+    <div id="glFullscreen">
+        <canvas id="example"></canvas>
+    </div>
+    <div id="dat">
+    </div>
+    <div id="info">
+        <div id="feedback"></div>
+    </div>
+    <script src="shared/libs/Detector.js"></script>
+    <script src="shared/libs/three.js"></script>
+    <script src="shared/libs/TrackballControls.js"></script>
+    <script src="shared/libs/MTLLoader.js"></script>
+    <script src="shared/libs/ShaderTranslucent.js"></script>
+    <!-- <script src="js/libs/dat.gui.min.js"></script> -->
+    <script src="shared/libs/Reflector.js"></script>
+    <script src="shared/libs/LoaderSupport.js"></script>
+    <script src="shared/libs/OBJLoader2.js"></script>
+
+
+    
+    <script id="fragment_shader4" type="x-shader/x-fragment">
+        
+            uniform float time;
+            varying vec2 vUv;
+            void main( void ) {
+                vec2 position = - 1.0 + 0.9 * vUv;
+                float red = abs( sin( position.x * position.y + time / 4.0 ) );
+                float green = abs( sin( position.x * position.y + time / 3.0 ) );
+                float blue = abs( sin( position.x * position.y + time / 2.0 ) );
+                gl_FragColor = vec4( red, blue, blue, 1.0 );
+            }
+
+    </script>
+
+    <script id="fragment_shader3" type="x-shader/x-fragment">
+            uniform float time;
+            varying vec2 vUv;
+            void main( void ) {
+                vec2 position = vUv;
+                float color = 0.0;
+                color += sin( position.x * cos( time / 15.0 ) * 80.0 ) + cos( position.y * cos( time / 15.0 ) * 10.0 );
+                color += sin( position.y * sin( time / 10.0 ) * 40.0 ) + cos( position.x * sin( time / 25.0 ) * 40.0 );
+                color += sin( position.x * sin( time / 5.0 ) * 10.0 ) + sin( position.y * sin( time / 35.0 ) * 80.0 );
+                color *= sin( time / 10.0 ) * 0.5;
+                gl_FragColor = vec4( vec3( color, color * 0.5, sin( color + time / 3.0 ) * 0.75 ), 1.0 );
+            }
+    </script>
+
+    <script id="fragment_shader1" type="x-shader/x-fragment">
+            uniform float time;
+            varying vec2 vUv;
+            void main(void) {
+                vec2 p = - 1.0 + 2.0 * vUv;
+                float a = time * 40.0;
+                float d, e, f, g = 1.0 / 40.0 ,h ,i ,r ,q;
+                e = 400.0 * ( p.x * 0.5 + 0.5 );
+                f = 400.0 * ( p.y * 0.5 + 0.5 );
+                i = 200.0 + sin( e * g + a / 150.0 ) * 20.0;
+                d = 200.0 + cos( f * g / 2.0 ) * 18.0 + cos( e * g ) * 7.0;
+                r = sqrt( pow( abs( i - e ), 2.0 ) + pow( abs( d - f ), 2.0 ) );
+                q = f / r;
+                e = ( r * cos( q ) ) - a / 2.0;
+                f = ( r * sin( q ) ) - a / 2.0;
+                d = sin( e * g ) * 176.0 + sin( e * g ) * 164.0 + r;
+                h = ( ( f + d ) + a / 2.0 ) * g;
+                i = cos( h + r * p.x / 1.3 ) * ( e + e + a ) + cos( q * g * 6.0 ) * ( r + h / 3.0 );
+                h = sin( f * g ) * 144.0 - sin( e * g ) * 212.0 * p.x;
+                h = ( h + ( f - e ) * q + sin( r - ( a + h ) / 7.0 ) * 10.0 + i / 4.0 ) * g;
+                i += cos( h * 2.3 * sin( a / 350.0 - q ) ) * 184.0 * sin( q - ( r * 4.3 + a / 12.0 ) * g ) + tan( r * g + h ) * 184.0 * cos( r * g + h );
+                i = mod( i / 5.6, 256.0 ) / 64.0;
+                if ( i < 0.0 ) i += 4.0;
+                if ( i >= 2.0 ) i = 4.0 - i;
+                d = r / 350.0;
+                d += sin( d * d * 8.0 ) * 0.52;
+                f = ( sin( a * g ) + 1.0 ) / 2.0;
+                gl_FragColor = vec4( vec3( f * i / 1.6, i / 2.0 + d / 13.0, i ) * d * p.x + vec3( i / 1.3 + d / 8.0, i / 2.0 + d / 18.0, i ) * d * ( 1.0 - p.x ), 1.0 );
+            }
+    </script>
+
+    <script id="fragment_shader2" type="x-shader/x-fragment">
+            precision highp float;
+            uniform float time;
+            varying vec2 vUv;
+            float makePoint(float x,float y,float fx,float fy,float sx,float sy,float t){
+                float xx=x+sin(t*fx)*sx;
+                float yy=y+cos(t*fy)*sy;
+                return 1.0/sqrt(xx*xx+yy*yy);
+            }
+            void main() {
+                vec2 p= -1.0 + 2.0 *vUv;
+                p=p*1.0;
+   
+                float x=p.x;
+                float y=p.y;
+
+                float a=
+                    makePoint(x,y,3.3,2.9,0.3,0.3,time);
+                    a=a+makePoint(x,y,1.9,2.0,0.4,0.4,time);
+                    a=a+makePoint(x,y,0.8,0.7,0.4,0.5,time);
+                    a=a+makePoint(x,y,2.3,0.1,0.6,0.3,time);
+                    a=a+makePoint(x,y,0.8,1.7,0.5,0.4,time);
+                    a=a+makePoint(x,y,0.3,1.0,0.4,0.4,time);
+                    a=a+makePoint(x,y,1.4,1.7,0.4,0.5,time);
+                    a=a+makePoint(x,y,1.3,2.1,0.6,0.3,time);
+                    a=a+makePoint(x,y,1.8,1.7,0.5,0.4,time);   
+   
+                    float b=
+                        makePoint(x,y,1.2,1.9,0.3,0.3,time);
+                    b=b+makePoint(x,y,0.7,2.7,0.4,0.4,time);
+                    b=b+makePoint(x,y,1.4,0.6,0.4,0.5,time);
+                    b=b+makePoint(x,y,2.6,0.4,0.6,0.3,time);
+                    b=b+makePoint(x,y,0.7,1.4,0.5,0.4,time);
+                    b=b+makePoint(x,y,0.7,1.7,0.4,0.4,time);
+                    b=b+makePoint(x,y,0.8,0.5,0.4,0.5,time);
+                    b=b+makePoint(x,y,1.4,0.9,0.6,0.3,time);
+                    b=b+makePoint(x,y,0.7,1.3,0.5,0.4,time);
+
+                    float c=
+                        makePoint(x,y,3.7,0.3,0.3,0.3,time);
+                    c=c+makePoint(x,y,1.9,1.3,0.4,0.4,time);
+                    c=c+makePoint(x,y,0.8,0.9,0.4,0.5,time);
+                    c=c+makePoint(x,y,1.2,1.7,0.6,0.3,time);
+                    c=c+makePoint(x,y,0.3,0.6,0.5,0.4,time);
+                    c=c+makePoint(x,y,0.3,0.3,0.4,0.4,time);
+                    c=c+makePoint(x,y,1.4,0.8,0.4,0.5,time);
+                    c=c+makePoint(x,y,0.2,0.6,0.6,0.3,time);
+                    c=c+makePoint(x,y,1.3,0.5,0.5,0.4,time);
+   
+                vec3 d=vec3(a,b,c)/23.5;
+                gl_FragColor = vec4(d.x,d.y,d.y,1.0);
+            }
+    </script>
+
+    <script id="fragment_shader5" type="x-shader/x-fragment">
+            uniform float time;
+            varying vec2 vUv;
+            void main( void ) {
+                vec2 uv = -1.0 + 2.0 *vUv;
+
+                vec3 wave_color = vec3(0.0);
+
+                float wave_width = 0.0;
+                uv  = -3.0 + 2.0 * uv;
+                uv.y += 0.0;
+                for(float i = 0.0; i <= 28.0; i++) {
+                    uv.y += (0.2+(0.9*sin(time*0.4) * sin(uv.x + i/3.0 + 3.0 *time )));
+                    uv.x += 1.7* sin(time*0.4);
+                    wave_width = abs(1.0 / (200.0*abs(cos(time)) * uv.y));
+                    wave_color += vec3(wave_width *( 0.4+((i+1.0)/18.0)), wave_width * (i / 7.0), wave_width * ((i+1.0)/ 8.0) * 1.5);
+                }
+
+                gl_FragColor = vec4(wave_color, 1.0);
+            }
+    </script>
+        <script id="fragment_shader6" type="x-shader/x-fragment">
+            #define t time
+
+            uniform float time;
+            precision highp float;
+            precision highp int;
+            varying vec2 vUv;
+            mat2 m(float a) {
+
+                float c = cos(a), s = sin(a);
+                return mat2(c, -s, s, c);
+            }
+
+            float map(vec3 p) {
+
+                p.xz *= m(t * 0.4);
+                p.xy *= m(t * 0.3);
+                vec3 q = p * 2. + t;
+                return length(p + vec3(sin(t * 0.7))) * log(length(p) + 1.) + sin(q.x + sin(q.z + sin(q.y))) * 0.5 - 1.;
+            }
+            void main( void ) {
+
+                vec2 p = -1.0 + 2.0 *vUv;
+                vec3 cl = vec3(0.);
+                float d = 2.5;
+                for(int i=0; i<=5; i++) {
+                    vec3 p = vec3(0,0,5.) + normalize(vec3(p, -1.))*d;
+                    float rz = map(p);
+                    float f =  clamp((rz - map(p+.1))*0.5, -.1, 1. );
+                    vec3 l = vec3(0.1,0.3,.4) + vec3(5., 2.5, 3.)*f;
+                    cl = cl*l + (1.-smoothstep(0., 2.5, rz))*.7*l;
+                    d += min(rz, 1.);
+                    }
+                gl_FragColor = vec4(cl, 1.0);
+            }
+    </script>
+        
+
+    <script id="vertexShader" type="x-shader/x-vertex">
+            varying vec2 vUv;
+            void main()
+            {
+                vUv = uv;
+                vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );
+                gl_Position = projectionMatrix * mvPosition;
+            }    
+    </script>
+
+    <!-- <script src="cube.js"></script> -->
+    <script src="lightForest.js"></script>
+    <script src="loadModels.js"></script>
+</body>
+
+</html>
